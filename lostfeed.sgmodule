@@ -1,0 +1,17 @@
+#!name=LostFeed
+#!desc=记录推特 / 小红书刷到的内容，刷新后也能找回。浏览器打开 http://feed.history 查看
+#!author=diana
+#!homepage=https://github.com/SuInk/lostfeed
+
+[Script]
+# 推特：首页（为你推荐 / 正在关注）、推文详情、用户主页、搜索、书签
+lostfeed-twitter = type=http-response,pattern=^https:\/\/(api\.)?(twitter|x)\.com\/(i\/api\/)?graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js
+
+# 小红书：首页推荐、搜索、笔记详情
+lostfeed-xhs = type=http-response,pattern=^https:\/\/edith\.xiaohongshu\.com\/api\/sns\/v\d+\/(homefeed|search\/notes|note\/imagefeed|note\/videofeed|note\/feed),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js
+
+# 查看页面
+lostfeed-viewer = type=http-request,pattern=^https?:\/\/feed\.history(\/|\?|$),timeout=10,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js
+
+[MITM]
+hostname = %APPEND% api.twitter.com, api.x.com, x.com, twitter.com, edith.xiaohongshu.com, feed.history

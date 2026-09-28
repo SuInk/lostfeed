@@ -1,0 +1,9 @@
+{
+  "name": "lostfeed",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shadowrocket 模块：记录推特 / 小红书刷到的内容",
+  "scripts": {
+    "test": "node test/run.js"
+  }
+}
