@@ -221,7 +221,46 @@ function capture(url, body) {
 
   const json = JSON.parse(body);
   const items = platform === 'twitter' ? extractTwitter(json, url) : extractXhs(json, url);
-  return save(platform, items, Date.now());
+  const added = save(platform, items, Date.now());
+  log({ url: url, size: body.length, found: items.length, added: added });
+  return added;
+}
+
+// ---------- 诊断日志：最近 30 次拦截 ----------
+
+const LOG_KEY = 'lostfeed.log';
+
+function readLog() {
+  try {
+    const list = JSON.parse($persistentStore.read(LOG_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function log(entry) {
+  try {
+    entry.t = Date.now();
+    entry.url = String(entry.url || '').split('?')[0];
+    $persistentStore.write(JSON.stringify([entry].concat(readLog()).slice(0, 30)), LOG_KEY);
+  } catch (e) {}
+}
+
+function renderDebug() {
+  const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  const rows = readLog().map(e => {
+    const d = new Date(e.t);
+    const time = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+    const result = e.error ? '<b style="color:#ff2442">出错：' + esc(e.error) + '</b>' : '解析到 ' + e.found + ' 条，新增 ' + e.added + ' 条';
+    return '<li><small>' + time + ' · ' + Math.round((e.size || 0) / 1024) + 'KB</small><br><code>' + esc(e.url.replace(/^https:\/\//, '')) + '</code><br>' + result + '</li>';
+  }).join('');
+  return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>LostFeed 诊断</title><style>body{font:14px/1.5 -apple-system,sans-serif;margin:0;padding:16px;background:#f6f6f4;color:#1d1d1b}'
+    + '@media (prefers-color-scheme:dark){body{background:#111;color:#eee}}li{margin-bottom:12px;word-break:break-all}code{font-size:12px}small{color:#8a8a85}ol{padding-left:20px}</style></head><body>'
+    + '<p><a href="/">← 返回</a></p><h2>最近拦截到的请求</h2>'
+    + (rows ? '<ol>' + rows + '</ol>' : '<p>还没有拦截到任何请求。<br>请确认：小火箭已开启、LostFeed 模块已勾选、HTTPS 解密已打开且证书已信任，然后去刷一下再回来看。</p>')
+    + '<p><small>截图这个页面就能帮忙排查问题。</small></p></body></html>';
 }
 
 // ---------- 查看页面 ----------
@@ -260,6 +299,7 @@ function handleViewer(url) {
     platforms.forEach(p => { data[p] = load(p); });
     return jsonResponse(data);
   }
+  if (path === '/debug') return htmlResponse(renderDebug());
   const data = {};
   Object.keys(STORE_KEYS).forEach(p => { data[p] = load(p); });
   return htmlResponse(renderPage(data));
@@ -322,6 +362,7 @@ h1{display:flex;justify-content:space-between;align-items:center}
 </header>
 <div class="tip" id="tip"><button class="x" id="tipx">×</button>📌 <b>放到桌面更方便：</b>点下方 <b>分享按钮</b> → <b>添加到主屏幕</b>，以后点桌面上的「刷过的」图标就能直接看。<br><small style="color:var(--muted)">记得保持小火箭开着，否则打不开。</small></div>
 <main id="list"></main>
+<p style="text-align:center;font-size:12px;color:var(--muted);padding-bottom:30px">推特请用 Safari 打开 x.com 刷（X App 无法记录）· <a href="/debug" style="color:var(--muted)">诊断</a></p>
 <script>
 const DATA=${payload};
 const NAMES=${names};
@@ -399,6 +440,7 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
       if (typeof $response !== 'undefined' && $response.body) capture(url, $response.body);
     } catch (e) {
       console.log('[lostfeed] ' + (e && e.message || e));
+      log({ url: url, size: ($response && $response.body || '').length, error: String(e && e.message || e) });
     }
     $done({}); // 原样放行
   }
