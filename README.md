@@ -57,7 +57,7 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 | 小红书 App | 首页推荐、关注、搜索、笔记详情 |
 | 推特网页版 | 首页（为你推荐 / 正在关注）、推文详情、用户主页、媒体、搜索、书签、列表 |
 
-**为什么不支持 X App？** X App 做了证书校验，一旦被小火箭解密就会直接断网，所以模块不拦截 X App 的域名，App 照常可用但不会记录。想记录推特就用 Safari 打开 x.com 刷，也可以把 x.com 添加到主屏幕当 App 用。
+**为什么不支持 X App？** 实测 X App 的接口域名 `api.twitter.com` 有证书校验，一旦被小火箭解密就会直接断网，所以模块不拦截 X App 的域名，App 照常可用但不会记录。想记录推特就用 Safari 打开 x.com 刷，也可以把 x.com 添加到主屏幕当 App 用。
 
 自动去重、跳过广告；数据只存在手机上的小火箭里，不会上传到任何地方。
 
