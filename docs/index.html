@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="刷过的">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/SuInk/lostfeed/main/icon.png">
+<title>刷过的内容</title>
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--text:#1d1d1b;--muted:#8a8a85;--line:#e6e6e1;--red:#ff2442}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--card:#1c1c1c;--text:#eee;--muted:#8d8d8d;--line:#2c2c2c}}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif}
+main{max-width:560px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 32px) 16px 40px}
+img{width:64px;border-radius:14px}
+h1{font-size:22px;margin:12px 0 4px}
+p{color:var(--muted);margin:0 0 20px}
+ol{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 14px 34px;margin:0 0 16px}
+li{margin:6px 0}
+b{color:var(--red)}
+code{font-size:13px;word-break:break-all}
+button{width:100%;border:0;border-radius:12px;background:var(--text);color:var(--bg);font-size:16px;padding:12px}
+</style>
+</head>
+<body>
+<main>
+  <img src="https://raw.githubusercontent.com/SuInk/lostfeed/main/icon.png" alt="">
+  <h1>没连上小火箭</h1>
+  <p>看到这一页，说明 LostFeed 模块还没生效。按顺序检查一下：</p>
+  <ol>
+    <li>小火箭已经<b>打开</b>（顶部开关是绿的）</li>
+    <li>配置 → 模块里，<b>LostFeed 已勾选</b>；看到「更新」就点一下</li>
+    <li>配置 → ⓘ → <b>HTTPS 解密已打开</b>，证书已安装</li>
+    <li>iPhone 设置 → 通用 → 关于本机 → 证书信任设置 → <b>小火箭证书已打开</b></li>
+  </ol>
+  <p>还没装模块？在小火箭 → 配置 → 模块 → 右上角 + 粘贴：<br><code>https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule</code></p>
+  <button onclick="location.reload()">检查好了，刷新</button>
+</main>
+</body>
+</html>

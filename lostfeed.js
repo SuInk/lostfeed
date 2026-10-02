@@ -2,7 +2,7 @@
  * LostFeed — Shadowrocket (小火箭) 脚本
  *
  * 1. http-response：拦截推特 / 小红书的信息流接口，把刷到的内容存进 $persistentStore
- * 2. http-request：访问 http://feed.history 时返回一个本地查看页面
+ * 2. http-request：访问 https://suink.github.io/lostfeed/ 时返回本地查看页面（小火箭没开时显示 GitHub Pages 上的说明页）
  *
  * 响应永远原样放行，解析出错也不会影响 App 正常使用。
  */
@@ -14,7 +14,7 @@ const STORE_KEYS = {
 const PLATFORM_NAMES = { twitter: '推特', xhs: '小红书' };
 const DEFAULT_MAX = 800;
 const ICON_URL = 'https://raw.githubusercontent.com/SuInk/lostfeed/main/icon.png';
-const VIEWER_RE = /^https?:\/\/feed\.history(?:[\/?#]|$)/;
+const VIEWER_RE = /^https?:\/\/(?:suink\.github\.io\/lostfeed|feed\.history)(?:[\/?#]|$)/;
 
 // ---------- 通用工具 ----------
 
@@ -258,7 +258,7 @@ function renderDebug() {
   return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>LostFeed 诊断</title><style>body{font:14px/1.5 -apple-system,sans-serif;margin:0;padding:16px;background:#f6f6f4;color:#1d1d1b}'
     + '@media (prefers-color-scheme:dark){body{background:#111;color:#eee}}li{margin-bottom:12px;word-break:break-all}code{font-size:12px}small{color:#8a8a85}ol{padding-left:20px}</style></head><body>'
-    + '<p><a href="/">← 返回</a></p><h2>最近拦截到的请求</h2>'
+    + '<p><a href="./">← 返回</a></p><h2>最近拦截到的请求</h2>'
     + (rows ? '<ol>' + rows + '</ol>' : '<p>还没有拦截到任何请求。<br>请确认：小火箭已开启、LostFeed 模块已勾选、HTTPS 解密已打开且证书已信任，然后去刷一下再回来看。</p>')
     + '<p><small>截图这个页面就能帮忙排查问题。</small></p></body></html>';
 }
@@ -286,7 +286,12 @@ function jsonResponse(obj) {
 }
 
 function handleViewer(url) {
-  const path = pathOf(url);
+  const rawPath = pathOf(url);
+  // 页面里都是相对链接，必须以 / 结尾才能解析对
+  if (rawPath === '/lostfeed') {
+    return { response: { status: 302, headers: { Location: '/lostfeed/' }, body: '' } };
+  }
+  const path = rawPath.replace(/^\/lostfeed(?=\/)/, '');
   const q = queryOf(url);
   const platforms = q.p && STORE_KEYS[q.p] ? [q.p] : Object.keys(STORE_KEYS);
 
@@ -362,7 +367,7 @@ h1{display:flex;justify-content:space-between;align-items:center}
 </header>
 <div class="tip" id="tip"><button class="x" id="tipx">×</button>📌 <b>放到桌面更方便：</b>点下方 <b>分享按钮</b> → <b>添加到主屏幕</b>，以后点桌面上的「刷过的」图标就能直接看。<br><small style="color:var(--muted)">记得保持小火箭开着，否则打不开。</small></div>
 <main id="list"></main>
-<p style="text-align:center;font-size:12px;color:var(--muted);padding-bottom:30px">推特请用 Safari 打开 x.com 刷（X App 无法记录）· <a href="/debug" style="color:var(--muted)">诊断</a></p>
+<p style="text-align:center;font-size:12px;color:var(--muted);padding-bottom:30px">推特请用 Safari 打开 x.com 刷（X App 无法记录）· <a href="debug" style="color:var(--muted)">诊断</a></p>
 <script>
 const DATA=${payload};
 const NAMES=${names};
@@ -405,7 +410,7 @@ $('#q').addEventListener('input',render);
 $('#clear').addEventListener('click',async()=>{
   const label=cur==='all'?'全部':NAMES[cur];
   if(!confirm('确定清空「'+label+'」的记录？'))return;
-  await fetch('/api/clear'+(cur==='all'?'':'?p='+cur));
+  await fetch('api/clear'+(cur==='all'?'':'?p='+cur));
   if(cur==='all')for(const p in DATA)DATA[p]=[];else DATA[cur]=[];
   render();
 });

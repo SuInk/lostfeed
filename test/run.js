@@ -54,16 +54,16 @@ assert.strictEqual(xhs.find(n => n.id.endsWith('3')).isVideo, true);
 assert.strictEqual(JSON.stringify(respond('https://x.com/i/api/graphql/abc/HomeTimeline', 'not json')), '{}');
 
 // 查看页面
-r = run({ $request: { url: 'http://feed.history/' } });
+r = run({ $request: { url: 'https://suink.github.io/lostfeed/' } });
 assert.strictEqual(r.response.status, 200);
 assert.ok(r.response.body.includes('周末咖啡店'));
 assert.ok(!r.response.body.includes('hello <world>'), '内容中的 < 应被转义');
 fs.writeFileSync(path.join(__dirname, 'preview.html'), r.response.body);
 
-r = run({ $request: { url: 'http://feed.history/api/export?p=xhs' } });
+r = run({ $request: { url: 'https://suink.github.io/lostfeed/api/export?p=xhs' } });
 assert.deepStrictEqual(Object.keys(JSON.parse(r.response.body)), ['xhs']);
 
-r = run({ $request: { url: 'http://feed.history/api/clear?p=twitter' } });
+r = run({ $request: { url: 'https://suink.github.io/lostfeed/api/clear?p=twitter' } });
 assert.strictEqual(store['lostfeed.twitter'], '[]');
 assert.strictEqual(JSON.parse(store['lostfeed.xhs']).length, 3);
 
@@ -73,7 +73,7 @@ run({ $argument: 'max=2', $request: { url: 'https://x.com/i/api/graphql/a/HomeTi
 assert.strictEqual(JSON.parse(store['lostfeed.twitter']).length, 2);
 
 // 诊断页
-r = run({ $request: { url: 'http://feed.history/debug' } });
+r = run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } });
 assert.ok(r.response.body.includes('rec.xiaohongshu.com/api/sns/v6/homefeed'));
 assert.ok(r.response.body.includes('出错'), '坏数据应记录在诊断里');
 
@@ -88,7 +88,7 @@ const pattern = name => new RegExp(mod.match(new RegExp('^' + name + ' = .*?patt
   'https://edith.xiaohongshu.com/api/sns/v3/note/videofeed?note_id=1',
 ].forEach(u => assert.ok(pattern('lostfeed-xhs').test(u), u));
 assert.ok(pattern('lostfeed-twitter').test('https://x.com/i/api/graphql/abc/HomeTimeline?variables=1'));
-assert.ok(pattern('lostfeed-viewer').test('http://feed.history/'));
+assert.ok(pattern('lostfeed-viewer').test('https://suink.github.io/lostfeed/'));
 const hosts = mod.match(/^hostname = (.*)$/m)[1];
 assert.ok(!/api\.x\.com|api\.twitter\.com/.test(hosts), 'X App 域名不能加入 MITM');
 ['rec.xiaohongshu.com', 'so.xiaohongshu.com', 'edith.xiaohongshu.com'].forEach(h => assert.ok(hosts.includes(h), h));

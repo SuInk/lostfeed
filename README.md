@@ -23,7 +23,7 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 
 **第 3 步：放到桌面**
 
-用 Safari 打开 **http://feed.history** → 点底部 **分享按钮** →「添加到主屏幕」。
+用 Safari 打开 **https://suink.github.io/lostfeed/** → 点底部 **分享按钮** →「添加到主屏幕」。
 
 桌面上会出现一个红色的「刷过的」图标，以后点它就能看历史了。
 
@@ -37,7 +37,7 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 
 ## 其他查看方式（可选）
 
-**快捷指令**：快捷指令 App → 新建 → 添加操作「打开 URL」→ 填 `http://feed.history` → 命名「刷过的」。
+**快捷指令**：快捷指令 App → 新建 → 添加操作「打开 URL」→ 填 `https://suink.github.io/lostfeed/` → 命名「刷过的」。
 
 **轻点背面**：设置 → 辅助功能 → 触控 → 轻点背面 → 轻点两下 → 选上面那个快捷指令。之后在推特 / 小红书里敲两下手机背面就能直接打开。
 
@@ -45,8 +45,8 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 
 | 情况 | 怎么办 |
 | --- | --- |
-| 打不开 feed.history | 确认小火箭是开着的、模块已勾选 |
-| 没有记录 | 打开 http://feed.history/debug（页面底部「诊断」），看有没有拦截到请求；没有的话检查 HTTPS 解密和证书信任 |
+| 打开后显示「没连上小火箭」 | 按页面上的清单检查：小火箭已开启、模块已勾选并更新、HTTPS 解密和证书信任已打开 |
+| 没有记录 | 打开 https://suink.github.io/lostfeed/debug（页面底部「诊断」），看有没有拦截到请求；没有的话检查 HTTPS 解密和证书信任 |
 | 小红书刷了要重开 App 才记录 | 模块已自带拒绝小红书 QUIC 的规则，第一次装好后把小红书彻底划掉重开一次 |
 | 想少存或多存一些 | 模块里 `argument=max=800` 改数字（每个平台分别计数） |
 
@@ -61,7 +61,7 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 
 自动去重、跳过广告；数据只存在手机上的小火箭里，不会上传到任何地方。
 
-高级：`http://feed.history/api/export` 导出 JSON，`http://feed.history/api/clear?p=xhs` 清空某个平台。
+高级：`https://suink.github.io/lostfeed/api/export` 导出 JSON，`https://suink.github.io/lostfeed/api/clear?p=xhs` 清空某个平台。
 
 ## 开发
 
