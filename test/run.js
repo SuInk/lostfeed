@@ -90,11 +90,19 @@ const ximg = JSON.parse(store['lostfeed.ximg']);
 assert.deepStrictEqual(ximg.map(e => e[0]), ['amplify_video_thumb/1923205176426463232/img/abc.jpg', 'media/GaBcD123xyz']);
 let page = run({ $request: { url: 'https://suink.github.io/lostfeed/' } }).response.body;
 assert.ok(page.includes('X 图片'));
+
 assert.ok(run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } }).response.body.includes('已记录 2 张'));
 const imgMod = fs.readFileSync(path.join(__dirname, '..', 'lostfeed-ximg.sgmodule'), 'utf8');
 const imgRe = new RegExp(imgMod.match(/pattern=([^,]+)/)[1]);
 assert.ok(imgRe.test('https://pbs.twimg.com/media/GaBcD123xyz?format=jpg&name=small'));
 assert.ok(!imgRe.test('https://pbs.twimg.com/profile_images/1/a.jpg'));
+
+// 残留的 $response 不能让图片请求被当成响应处理
+const logBefore = store['lostfeed.log'];
+run({ $request: { url: 'https://pbs.twimg.com/media/Stale123?name=small' }, $response: {} });
+assert.strictEqual(store['lostfeed.log'], logBefore);
+assert.strictEqual(JSON.parse(store['lostfeed.ximg'])[0][0], 'media/Stale123');
+assert.strictEqual(run({ $request: { url: 'https://suink.github.io/lostfeed/' }, $response: {} }).response.status, 200);
 
 // 诊断页
 r = run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } });

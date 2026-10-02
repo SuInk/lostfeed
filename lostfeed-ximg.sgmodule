@@ -4,7 +4,7 @@
 #!homepage=https://github.com/SuInk/lostfeed
 
 [Script]
-lostfeed-ximg = type=http-request,pattern=^https:\/\/pbs\.twimg\.com\/(media|amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)\/,timeout=5,argument=max=1500,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=5
+lostfeed-ximg = type=http-request,pattern=^https:\/\/pbs\.twimg\.com\/(media|amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)\/,timeout=5,argument=max=1500,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=6
 
 [MITM]
 hostname = %APPEND% pbs.twimg.com

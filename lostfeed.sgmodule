@@ -9,13 +9,13 @@ AND,((PROTOCOL,UDP),(DST-PORT,443),(DOMAIN-SUFFIX,xiaohongshu.com)),REJECT
 
 [Script]
 # 小红书：首页推荐（rec）、关注、搜索（so）、笔记详情
-lostfeed-xhs = type=http-response,pattern=^https:\/\/(edith|rec|so|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/(homefeed|followfeed|search\/notes|note\/imagefeed|note\/videofeed|note\/feed|user\/followings\/followfeed),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=5
+lostfeed-xhs = type=http-response,pattern=^https:\/\/(edith|rec|so|www)\.xiaohongshu\.com\/api\/sns\/v\d+\/(homefeed|followfeed|search\/notes|note\/imagefeed|note\/videofeed|note\/feed|user\/followings\/followfeed),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=6
 
 # 推特：只支持网页版（Safari 打开 x.com）。X App（api.twitter.com）实测有证书校验，解密会断网，所以不拦截 App 的域名
-lostfeed-twitter = type=http-response,pattern=^https:\/\/x\.com\/i\/api\/graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=5
+lostfeed-twitter = type=http-response,pattern=^https:\/\/x\.com\/i\/api\/graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=6
 
 # 查看页面
-lostfeed-viewer = type=http-request,pattern=^https:\/\/suink\.github\.io\/lostfeed(\/|\?|$),timeout=10,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=5
+lostfeed-viewer = type=http-request,pattern=^https:\/\/suink\.github\.io\/lostfeed(\/|\?|$),timeout=10,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=6
 
 [MITM]
 hostname = %APPEND% edith.xiaohongshu.com, rec.xiaohongshu.com, so.xiaohongshu.com, www.xiaohongshu.com, x.com, suink.github.io

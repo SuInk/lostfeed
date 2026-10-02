@@ -504,14 +504,15 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
   module.exports = { extractTwitter, extractXhs, save, load, handleViewer, capture };
 } else {
   const url = ($request && $request.url) || '';
-  if (typeof $response === 'undefined' && XIMG_RE.test(url)) {
+  // 先按地址分流：小火箭可能复用脚本环境，残留的 $response 不可靠
+  if (XIMG_RE.test(url)) {
     try {
       recordImage(url, Date.now());
     } catch (e) {
       console.log('[lostfeed] ' + (e && e.message || e));
     }
     $done({}); // 只记地址，请求原样放行
-  } else if (typeof $response === 'undefined' && VIEWER_RE.test(url)) {
+  } else if (VIEWER_RE.test(url)) {
     let res;
     try {
       res = handleViewer(url);
