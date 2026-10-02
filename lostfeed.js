@@ -426,6 +426,21 @@ render();
 </html>`;
 }
 
+/** 有的环境把响应体给成二进制，统一转成字符串 */
+function bodyText(body) {
+  if (!body) return '';
+  if (typeof body === 'string') return body;
+  try {
+    const bytes = body instanceof Uint8Array ? body : new Uint8Array(body);
+    if (typeof TextDecoder !== 'undefined') return new TextDecoder('utf-8').decode(bytes);
+    let out = '';
+    for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+    return decodeURIComponent(escape(out));
+  } catch (e) {
+    return '';
+  }
+}
+
 // ---------- 入口 ----------
 
 if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefined') {
@@ -441,11 +456,17 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
     }
     $done(res);
   } else {
+    const body = typeof $response !== 'undefined' ? bodyText($response.body) : '';
     try {
-      if (typeof $response !== 'undefined' && $response.body) capture(url, $response.body);
+      if (!body) {
+        // 脚本被触发了但没拿到内容（比如超过 max-size），也记一笔方便排查
+        log({ url: url, size: 0, error: '没有拿到响应内容（状态码 ' + (($response && ($response.status || $response.statusCode)) || '?') + '）' });
+      } else {
+        capture(url, body);
+      }
     } catch (e) {
       console.log('[lostfeed] ' + (e && e.message || e));
-      log({ url: url, size: ($response && $response.body || '').length, error: String(e && e.message || e) });
+      log({ url: url, size: body.length, error: String(e && e.message || e) });
     }
     $done({}); // 原样放行
   }

@@ -3,8 +3,13 @@
 #!author=diana
 #!homepage=https://github.com/SuInk/lostfeed
 
+[Rule]
+# X App 可能走 QUIC 绕过解密，拒绝后退回普通 HTTPS
+AND,((PROTOCOL,UDP),(DST-PORT,443),(DOMAIN-SUFFIX,x.com)),REJECT
+AND,((PROTOCOL,UDP),(DST-PORT,443),(DOMAIN-SUFFIX,twitter.com)),REJECT
+
 [Script]
-lostfeed-x-app = type=http-response,pattern=^https:\/\/api\.x\.com\/(i\/api\/)?graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=3
+lostfeed-x-app = type=http-response,pattern=^https:\/\/api\.x\.com\/(i\/api\/)?graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=4
 
 [MITM]
 hostname = %APPEND% api.x.com

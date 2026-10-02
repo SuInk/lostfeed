@@ -72,6 +72,14 @@ store['lostfeed.twitter'] = '[]';
 run({ $argument: 'max=2', $request: { url: 'https://x.com/i/api/graphql/a/HomeTimeline' }, $response: { body: fixture('twitter-home.json') } });
 assert.strictEqual(JSON.parse(store['lostfeed.twitter']).length, 2);
 
+// 二进制响应体也能解析
+store['lostfeed.xhs'] = '[]';
+respond('https://rec.xiaohongshu.com/api/sns/v6/homefeed', new TextEncoder().encode(fixture('xhs-homefeed.json')));
+assert.strictEqual(JSON.parse(store['lostfeed.xhs']).length, 2);
+// 没拿到内容也要记进诊断
+run({ $request: { url: 'https://rec.xiaohongshu.com/api/sns/v6/homefeed' }, $response: { status: 200 } });
+assert.ok(JSON.parse(store['lostfeed.log'])[0].error.includes('没有拿到响应内容'));
+
 // 诊断页
 r = run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } });
 assert.ok(r.response.body.includes('rec.xiaohongshu.com/api/sns/v6/homefeed'));
