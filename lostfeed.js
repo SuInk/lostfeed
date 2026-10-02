@@ -17,6 +17,8 @@ const DEFAULT_MAX = 800;
 const ICON_URL = 'https://raw.githubusercontent.com/SuInk/lostfeed/main/icon.png';
 // X App 的推文图片 / 视频封面（头像、链接卡片不记）
 const XIMG_RE = /^https:\/\/pbs\.twimg\.com\/((?:media|amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)\/[^?#]+)/;
+// 抓包测试：看 X 图片 / 视频请求里有没有夹带推文 ID
+const PROBE_RE = /^https:\/\/(?:pbs|video|video-s)\.twimg\.com\//;
 const VIEWER_RE = /^https?:\/\/(?:suink\.github\.io\/lostfeed|feed\.history)(?:[\/?#]|$)/;
 
 // ---------- 通用工具 ----------
@@ -285,6 +287,9 @@ function renderDebug() {
   const rows = readLog().map(e => {
     const d = new Date(e.t);
     const time = (d.getMonth() + 1) + '/' + d.getDate() + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+    if (e.probe) {
+      return '<li><small>' + time + ' · 抓包</small><br><code>' + esc(e.full) + '</code><br><code style="color:#8a8a85">' + esc(e.headers) + '</code></li>';
+    }
     const result = e.error ? '<b style="color:#ff2442">出错：' + esc(e.error) + '</b>' : '解析到 ' + e.found + ' 条，新增 ' + e.added + ' 条';
     return '<li><small>' + time + ' · ' + Math.round((e.size || 0) / 1024) + 'KB</small><br><code>' + esc(e.url.replace(/^https:\/\//, '')) + '</code><br>' + result + '</li>';
   }).join('');
@@ -505,7 +510,16 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
 } else {
   const url = ($request && $request.url) || '';
   // 先按地址分流：小火箭可能复用脚本环境，残留的 $response 不可靠
-  if (XIMG_RE.test(url)) {
+  if (parseArgs(typeof $argument !== 'undefined' ? $argument : '').probe === '1' && PROBE_RE.test(url)) {
+    try {
+      const headers = Object.keys($request.headers || {})
+        .filter(k => !/^(cookie|authorization)$/i.test(k)) // 不记登录信息
+        .map(k => k + ': ' + $request.headers[k]).join(' | ');
+      log({ url: url, full: url, headers: headers, probe: true });
+      if (XIMG_RE.test(url)) recordImage(url, Date.now());
+    } catch (e) {}
+    $done({});
+  } else if (XIMG_RE.test(url)) {
     try {
       recordImage(url, Date.now());
     } catch (e) {

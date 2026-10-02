@@ -1,0 +1,10 @@
+#!name=LostFeed · X 抓包测试
+#!desc=临时测试：记录 X App 图片 / 视频请求的完整地址和请求头，看有没有夹带推文 ID。刷 1 分钟 X 后去诊断页截图，然后关掉这个模块。测试期间请先关闭「X 图片墙」
+#!author=diana
+#!homepage=https://github.com/SuInk/lostfeed
+
+[Script]
+lostfeed-xprobe = type=http-request,pattern=^https:\/\/(pbs|video|video-s)\.twimg\.com\/,timeout=5,argument=probe=1,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js?v=7
+
+[MITM]
+hostname = %APPEND% pbs.twimg.com, video.twimg.com, video-s.twimg.com

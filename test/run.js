@@ -104,6 +104,14 @@ assert.strictEqual(store['lostfeed.log'], logBefore);
 assert.strictEqual(JSON.parse(store['lostfeed.ximg'])[0][0], 'media/Stale123');
 assert.strictEqual(run({ $request: { url: 'https://suink.github.io/lostfeed/' }, $response: {} }).response.status, 200);
 
+// 抓包模式：记录完整地址和请求头，去掉 Cookie
+run({ $argument: 'probe=1', $request: { url: 'https://video.twimg.com/amplify_video/1/vid/a.mp4?tag=14', headers: { 'User-Agent': 'Twitter-iPhone', Cookie: 'secret' } } });
+const probe = JSON.parse(store['lostfeed.log'])[0];
+assert.strictEqual(probe.full, 'https://video.twimg.com/amplify_video/1/vid/a.mp4?tag=14');
+assert.ok(probe.headers.includes('Twitter-iPhone') && !probe.headers.includes('secret'));
+assert.ok(run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } }).response.body.includes('抓包'));
+store['lostfeed.log'] = JSON.stringify(JSON.parse(store['lostfeed.log']).slice(1));
+
 // 诊断页
 r = run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } });
 assert.ok(r.response.body.includes('rec.xiaohongshu.com/api/sns/v6/homefeed'));
