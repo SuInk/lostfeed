@@ -1,0 +1,10 @@
+#!name=LostFeed · X App 测试
+#!desc=测试用：只解密 api.x.com，看 X App 会不会断网。断网就关掉这个模块；能用的话去 http://feed.history/debug 看有没有记录
+#!author=diana
+#!homepage=https://github.com/SuInk/lostfeed
+
+[Script]
+lostfeed-x-app = type=http-response,pattern=^https:\/\/api\.x\.com\/(i\/api\/)?graphql\/[\w-]+\/(HomeTimeline|HomeLatestTimeline|TweetDetail|UserTweets|UserMedia|SearchTimeline|Bookmarks|ListLatestTweetsTimeline),requires-body=1,max-size=0,timeout=10,argument=max=800,script-path=https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.js
+
+[MITM]
+hostname = %APPEND% api.x.com
