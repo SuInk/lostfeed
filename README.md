@@ -59,6 +59,12 @@ https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed.sgmodule
 
 **为什么不支持 X App？** 实测 X App 的接口域名 `api.twitter.com` 有证书校验，一旦被小火箭解密就会直接断网，所以模块不拦截 X App 的域名，App 照常可用但不会记录。想记录推特就用 Safari 打开 x.com 刷，也可以把 x.com 添加到主屏幕当 App 用。
 
+**X 图片墙（测试）**：X 的图片服务器可以解密，额外装这个模块后，会自动记下你在 X App 里刷到的图片和视频封面，在「刷过的」里多一个「X 图片」标签。只有图片，点不回原帖。如果 X 的图片加载不出来，关掉它即可：
+
+```
+https://raw.githubusercontent.com/SuInk/lostfeed/main/lostfeed-ximg.sgmodule
+```
+
 自动去重、跳过广告；数据只存在手机上的小火箭里，不会上传到任何地方。
 
 高级：`https://suink.github.io/lostfeed/api/export` 导出 JSON，`https://suink.github.io/lostfeed/api/clear?p=xhs` 清空某个平台。

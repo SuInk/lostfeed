@@ -80,6 +80,22 @@ assert.strictEqual(JSON.parse(store['lostfeed.xhs']).length, 2);
 run({ $request: { url: 'https://rec.xiaohongshu.com/api/sns/v6/homefeed' }, $response: { status: 200 } });
 assert.ok(JSON.parse(store['lostfeed.log'])[0].error.includes('没有拿到响应内容'));
 
+// X 图片墙：同一张图不同尺寸只记一次，头像不记，请求原样放行
+const req = url => run({ $request: { url } });
+assert.strictEqual(JSON.stringify(req('https://pbs.twimg.com/media/GaBcD123xyz?format=jpg&name=small')), '{}');
+req('https://pbs.twimg.com/media/GaBcD123xyz.jpg?name=orig');
+req('https://pbs.twimg.com/amplify_video_thumb/1923205176426463232/img/abc.jpg?name=small');
+req('https://pbs.twimg.com/profile_images/123/avatar_normal.jpg');
+const ximg = JSON.parse(store['lostfeed.ximg']);
+assert.deepStrictEqual(ximg.map(e => e[0]), ['amplify_video_thumb/1923205176426463232/img/abc.jpg', 'media/GaBcD123xyz']);
+let page = run({ $request: { url: 'https://suink.github.io/lostfeed/' } }).response.body;
+assert.ok(page.includes('X 图片'));
+assert.ok(run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } }).response.body.includes('已记录 2 张'));
+const imgMod = fs.readFileSync(path.join(__dirname, '..', 'lostfeed-ximg.sgmodule'), 'utf8');
+const imgRe = new RegExp(imgMod.match(/pattern=([^,]+)/)[1]);
+assert.ok(imgRe.test('https://pbs.twimg.com/media/GaBcD123xyz?format=jpg&name=small'));
+assert.ok(!imgRe.test('https://pbs.twimg.com/profile_images/1/a.jpg'));
+
 // 诊断页
 r = run({ $request: { url: 'https://suink.github.io/lostfeed/debug' } });
 assert.ok(r.response.body.includes('rec.xiaohongshu.com/api/sns/v6/homefeed'));

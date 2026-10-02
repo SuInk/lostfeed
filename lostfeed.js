@@ -10,10 +10,13 @@
 const STORE_KEYS = {
   twitter: 'lostfeed.twitter',
   xhs: 'lostfeed.xhs',
+  ximg: 'lostfeed.ximg',
 };
-const PLATFORM_NAMES = { twitter: '推特', xhs: '小红书' };
+const PLATFORM_NAMES = { twitter: '推特', xhs: '小红书', ximg: 'X 图片' };
 const DEFAULT_MAX = 800;
 const ICON_URL = 'https://raw.githubusercontent.com/SuInk/lostfeed/main/icon.png';
+// X App 的推文图片 / 视频封面（头像、链接卡片不记）
+const XIMG_RE = /^https:\/\/pbs\.twimg\.com\/((?:media|amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)\/[^?#]+)/;
 const VIEWER_RE = /^https?:\/\/(?:suink\.github\.io\/lostfeed|feed\.history)(?:[\/?#]|$)/;
 
 // ---------- 通用工具 ----------
@@ -28,10 +31,10 @@ function parseArgs(raw) {
   return out;
 }
 
-function maxItems() {
+function maxItems(fallback) {
   const args = parseArgs(typeof $argument !== 'undefined' ? $argument : '');
   const n = parseInt(args.max, 10);
-  return n > 0 ? n : DEFAULT_MAX;
+  return n > 0 ? n : fallback || DEFAULT_MAX;
 }
 
 function walk(node, visit, depth) {
@@ -226,6 +229,28 @@ function capture(url, body) {
   return added;
 }
 
+// ---------- X 图片墙 ----------
+
+/** 同一张图的不同尺寸算一张：media 去掉扩展名，其它保留完整路径 */
+function imageKey(url) {
+  const m = url.match(XIMG_RE);
+  if (!m) return null;
+  return m[1].indexOf('media/') === 0 ? m[1].replace(/\.(jpe?g|png|webp)$/i, '') : m[1];
+}
+
+/** 只存 [路径, 时间]，图片请求很频繁，存得越小越好 */
+function recordImage(url, now) {
+  const key = imageKey(url);
+  if (!key) return false;
+  const list = load('ximg');
+  for (let i = 0; i < list.length; i++) if (list[i][0] === key) return false;
+  let merged = [[key, now]].concat(list).slice(0, maxItems(1500));
+  while (!persist('ximg', merged) && merged.length > 50) {
+    merged = merged.slice(0, Math.floor(merged.length / 2));
+  }
+  return true;
+}
+
 // ---------- 诊断日志：最近 30 次拦截 ----------
 
 const LOG_KEY = 'lostfeed.log';
@@ -247,6 +272,14 @@ function log(entry) {
   } catch (e) {}
 }
 
+function imageStats() {
+  const list = load('ximg');
+  if (!list.length) return '<p><small>X 图片：还没有记录（需要安装「X 图片墙」模块）</small></p>';
+  const d = new Date(list[0][1]);
+  return '<p><small>X 图片：已记录 ' + list.length + ' 张，最近一张 ' + (d.getMonth() + 1) + '/' + d.getDate() + ' '
+    + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + '</small></p>';
+}
+
 function renderDebug() {
   const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   const rows = readLog().map(e => {
@@ -258,7 +291,7 @@ function renderDebug() {
   return '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + '<title>LostFeed 诊断</title><style>body{font:14px/1.5 -apple-system,sans-serif;margin:0;padding:16px;background:#f6f6f4;color:#1d1d1b}'
     + '@media (prefers-color-scheme:dark){body{background:#111;color:#eee}}li{margin-bottom:12px;word-break:break-all}code{font-size:12px}small{color:#8a8a85}ol{padding-left:20px}</style></head><body>'
-    + '<p><a href="./">← 返回</a></p><h2>最近拦截到的请求</h2>'
+    + '<p><a href="./">← 返回</a></p>' + imageStats() + '<h2>最近拦截到的请求</h2>'
     + (rows ? '<ol>' + rows + '</ol>' : '<p>还没有拦截到任何请求。<br>请确认：小火箭已开启、LostFeed 模块已勾选、HTTPS 解密已打开且证书已信任，然后去刷一下再回来看。</p>')
     + '<p><small>截图这个页面就能帮忙排查问题。</small></p></body></html>';
 }
@@ -356,6 +389,11 @@ h1{display:flex;justify-content:space-between;align-items:center}
 .refresh{border:0;background:none;color:var(--muted);font-size:22px;padding:0 4px}
 .tip{display:none;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin:12px 16px 0;font-size:14px;max-width:648px}
 .tip b{color:var(--xhs)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.grid a{position:relative;display:block;aspect-ratio:1;background:var(--line);border-radius:6px;overflow:hidden}
+.grid img{width:100%;height:100%;object-fit:cover;display:block}
+.grid .play{position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:11px;line-height:22px;text-align:center}
+.note{color:var(--muted);font-size:13px;margin:4px 0 8px}
 .tip .x{float:right;border:0;background:none;color:var(--muted);font-size:18px;line-height:1}
 </style>
 </head>
@@ -376,18 +414,36 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 function all(){
   const out=[];
-  for(const p in DATA){ if(cur==='all'||cur===p) DATA[p].forEach(it=>out.push(Object.assign({p},it))); }
+  for(const p in DATA){ if(p!=='ximg'&&(cur==='all'||cur===p)) DATA[p].forEach(it=>out.push(Object.assign({p},it))); }
   return out.sort((a,b)=>b.firstSeen-a.firstSeen);
 }
 function fmtDay(t){const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
 function fmtTime(t){const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function renderTabs(){
-  const total=Object.values(DATA).reduce((n,l)=>n+l.length,0);
-  const tabs=[['all','全部',total]].concat(Object.keys(DATA).map(p=>[p,NAMES[p],DATA[p].length]));
+  const keys=Object.keys(DATA).filter(p=>p!=='ximg'||DATA.ximg.length);
+  const total=keys.filter(p=>p!=='ximg').reduce((n,p)=>n+DATA[p].length,0);
+  const tabs=[['all','全部',total]].concat(keys.map(p=>[p,NAMES[p],DATA[p].length]));
   $('#tabs').innerHTML=tabs.map(([k,n,c])=>'<button class="tab'+(k===cur?' on':'')+'" data-k="'+k+'">'+n+' '+c+'</button>').join('');
+}
+function renderImages(){
+  const list=DATA.ximg||[];
+  if(!list.length){$('#list').innerHTML='<div class="empty">还没有图片</div>';return;}
+  let html='<div class="note">X App 里刷到的图片，点开看大图（只有图片，点不回原帖）</div>',day='',open=false;
+  for(const [key,t] of list.slice(0,600)){
+    const d=fmtDay(t);
+    if(d!==day){if(open)html+='</div>';day=d;html+='<div class="day">'+d+'</div><div class="grid">';open=true;}
+    const isMedia=key.indexOf('media/')===0;
+    const src='https://pbs.twimg.com/'+key+(isMedia?'?format=jpg&name=small':'');
+    const big='https://pbs.twimg.com/'+key+(isMedia?'?format=jpg&name=large':'');
+    html+='<a href="'+esc(big)+'" target="_blank" rel="noreferrer"><img loading="lazy" referrerpolicy="no-referrer" src="'+esc(src)+'">'+(isMedia?'':'<span class="play">▶</span>')+'</a>';
+  }
+  if(open)html+='</div>';
+  $('#list').innerHTML=html;
 }
 function render(){
   renderTabs();
+  $('#q').style.visibility=cur==='ximg'?'hidden':'';
+  if(cur==='ximg'){renderImages();return;}
   const kw=$('#q').value.trim().toLowerCase();
   const items=all().filter(it=>!kw||[it.author,it.handle,it.title,it.text].join(' ').toLowerCase().includes(kw));
   if(!items.length){$('#list').innerHTML='<div class="empty">'+(kw?'没有搜到相关内容':'还没有记录<br><br>保持小火箭开启，去刷一会儿推特或小红书，<br>再回来点右上角 ↻ 刷新')+'</div>';return;}
@@ -412,6 +468,7 @@ $('#clear').addEventListener('click',async()=>{
   if(!confirm('确定清空「'+label+'」的记录？'))return;
   await fetch('api/clear'+(cur==='all'?'':'?p='+cur));
   if(cur==='all')for(const p in DATA)DATA[p]=[];else DATA[cur]=[];
+  if(cur==='ximg')cur='all';
   render();
 });
 (function(){
@@ -447,7 +504,14 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
   module.exports = { extractTwitter, extractXhs, save, load, handleViewer, capture };
 } else {
   const url = ($request && $request.url) || '';
-  if (typeof $response === 'undefined' && VIEWER_RE.test(url)) {
+  if (typeof $response === 'undefined' && XIMG_RE.test(url)) {
+    try {
+      recordImage(url, Date.now());
+    } catch (e) {
+      console.log('[lostfeed] ' + (e && e.message || e));
+    }
+    $done({}); // 只记地址，请求原样放行
+  } else if (typeof $response === 'undefined' && VIEWER_RE.test(url)) {
     let res;
     try {
       res = handleViewer(url);
@@ -455,12 +519,14 @@ if (typeof module !== 'undefined' && module.exports && typeof $done === 'undefin
       res = htmlResponse('<pre>LostFeed 出错：' + String(e && e.stack || e).replace(/</g, '&lt;') + '</pre>', 500);
     }
     $done(res);
+  } else if (typeof $response === 'undefined') {
+    $done({}); // 不是我们关心的请求
   } else {
-    const body = typeof $response !== 'undefined' ? bodyText($response.body) : '';
+    const body = bodyText($response.body);
     try {
       if (!body) {
         // 脚本被触发了但没拿到内容（比如超过 max-size），也记一笔方便排查
-        log({ url: url, size: 0, error: '没有拿到响应内容（状态码 ' + (($response && ($response.status || $response.statusCode)) || '?') + '）' });
+        log({ url: url, size: 0, error: '没有拿到响应内容（状态码 ' + ($response.status || $response.statusCode || '?') + '）' });
       } else {
         capture(url, body);
       }
